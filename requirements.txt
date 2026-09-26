@@ -1,0 +1,10 @@
+polars
+psutil
+chardet
+fastapi
+uvicorn
+pydantic
+duckdb
+requests
+pyarrow
+dbt
