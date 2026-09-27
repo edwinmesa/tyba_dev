@@ -8,3 +8,6 @@ duckdb
 requests
 pyarrow
 dbt
+dbt-postgres
+psycopg
+psycopg_binary

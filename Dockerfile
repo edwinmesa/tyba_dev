@@ -8,7 +8,9 @@ ENV PYTHONUNBUFFERED=1
 
 # Install system dependencies
 RUN apt-get update && \
-    apt-get install -y git && \
+    apt-get install -y \
+    git \
+    netcat-openbsd && \
     rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -20,6 +22,11 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy the entrypoint script
+COPY entrypoint.sh .
+# Make the entrypoint script executable
+RUN chmod +x entrypoint.sh
+
 # Copy only the application code into the container
 # This avoids copying Airflow files, etc., into the FastAPI image.
 COPY ./app .
@@ -27,5 +34,5 @@ COPY ./app .
 # Expose FastAPI port
 EXPOSE 8088
 
-# Command to run FastAPI app
-CMD ["uvicorn", "utils.main:app", "--host", "0.0.0.0", "--port", "8088"]
+# Command to run all the PIPELINE
+CMD ["./entrypoint.sh"]

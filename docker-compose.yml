@@ -1,27 +1,38 @@
 services:
   postgres:
     image: postgres:17
+    container_name: tyba_postgres
     environment:
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=admin
+      - POSTGRES_USER=tyba
+      - POSTGRES_PASSWORD=tyba
       - POSTGRES_DB=tyba
     volumes:
-      - postgres-db-volume:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
     ports:
       - "5433:5432"
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "admin"]
+      test: ["CMD-SHELL", "pg_isready -U tyba -d tyba"]
       interval: 5s
       timeout: 5s
       retries: 5
+
+
 
   fastapi-app:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: tyba_api
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8088"]
     volumes:
       - ./app:/app
       - ./data:/app/data
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=tyba
+      - POSTGRES_USER=tyba
+      - POSTGRES_PASSWORD=tyba
     ports:
       - "8088:8088"
     restart: always
@@ -33,5 +44,5 @@ services:
         condition: service_healthy
 
 volumes:
-  postgres-db-volume:
+  pgdata:
 

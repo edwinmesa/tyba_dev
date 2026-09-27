@@ -1,0 +1,32 @@
+#!/bin/bash
+set -e
+
+echo ">> Esperando a que Postgres esté listo..."
+until nc -z "${POSTGRES_HOST}" "${POSTGRES_PORT}"; do
+  sleep 1
+done
+echo ">> Postgres disponible."
+
+# cd /app/dbt
+# export DBT_PROFILES_DIR=/app/dbt_tyba
+
+# echo ">> Instalando dependencias de dbt (si aplica)..."
+# dbt deps || true
+
+# run_pipeline.py hace lo siguiente por cada archivo NUEVO en /app/data/raw
+# (en orden alfabético = orden cronológico de los cortes):
+#   1. lo carga en raw.movimientos vía COPY
+#   2. corre `dbt snapshot` inmediatamente después de cargarlo
+# Esto simula el procesamiento día a día: cada corte se snapshotea
+# individualmente para que la lógica de SCD2 detecte nuevo/corregido/eliminado
+# comparando exactamente contra el corte anterior, no contra un batch mezclado.
+# echo ">> Procesando cortes pendientes..."
+# python /app/src/run_pipeline.py
+
+# echo ">> Construyendo modelos (staging + marts)..."
+# dbt run
+
+# echo ">> Corriendo tests de calidad..."
+# dbt test
+
+# echo ">> Pipeline completado exitosamente."
