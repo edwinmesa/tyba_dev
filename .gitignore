@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.venv/
+dbt_tyba/target/
+dbt_tyba/dbt_packages/
+dbt_tyba/logs/
+data/raw/*.parquet
+!data/raw/.gitkeep

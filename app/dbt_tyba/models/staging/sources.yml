@@ -1,0 +1,34 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: transactions
+        description: >
+          Datos crudos tal cual llegan en cada corte diario (parquet).
+          Append-only: nunca se actualiza ni se borra, cada carga suma filas
+          nuevas identificadas por _batch_id y _source_file. Todas las
+          columnas de negocio quedan como TEXT; el tipado real vive en
+          stg_transactions.
+        columns:
+          - name: id_cliente
+            description: Identificador de la transacción (sin tipar).
+          - name: _source_file
+            description: Nombre del archivo parquet de origen del corte.
+          - name: _batch_id
+            description: UUID generado por el loader, uno por cada carga/corte.
+          - name: _loaded_at
+            description: Timestamp de cuándo el loader insertó la fila.
+
+      - name: _processed_files
+        description: >
+          Tabla de control: registra qué archivos parquet ya fueron cargados,
+          para que run_pipeline.py no reprocese un corte dos veces.
+        columns:
+          - name: filename
+            description: Nombre del archivo procesado (primary key).
+          - name: batch_id
+            description: UUID de esa carga, referenciado en raw.transactions._batch_id.
+          - name: row_count
+            description: Cantidad de filas que trajo ese corte.

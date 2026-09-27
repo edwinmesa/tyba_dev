@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: stg_transactions
+    description: >
+      Versión limpia y tipada del raw, con row_hash para detección de cambios.
+      Un mismo id puede aparecer varias veces (una por cada _batch_id/corte);
+      la unicidad real por corte se valida abajo.
+    columns:
+      - name: id_cliente
+        description: Identificador de la transacción.
+        tests:
+          - not_null
+      - name: type
+        description: Entrada o salida del movimiento.
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['entrada', 'salida']
+              config:
+                severity: warn
+      - name: amount
+        description: Monto del movimiento.
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: row_hash
+        description: Hash de los campos relevantes, usado por el snapshot SCD2.
+        tests:
+          - not_null

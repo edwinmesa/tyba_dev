@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: dim_current_transactions
+    description: Foto del estado vigente (última versión no eliminada) de cada id.
+    columns:
+      - name: id_cliente
+        tests:
+          - unique
+          - not_null
+
+  - name: fct_historical_transactions
+    description: Historial completo (SCD2) de todas las versiones de cada transacción.
+    columns:
+      - name: id_cliente
+        tests:
+          - not_null
+      - name: event_type
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['new', 'corrected', 'deleted']
+
+  - name: insights_by_product
+    description: Agregación de volumen y montos por producto/fondo/tipo, estado actual.
+
+  - name: insights_by_change_trx
+    description: Conteo de eventos (new/corrected/deleted) por cada corte procesado.
