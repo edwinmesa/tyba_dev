@@ -5,7 +5,7 @@ import polars as pl
 
 
 RAW_COLUMNS = [
-    "id",
+    "id_cliente",
     "date",
     "product",
     "amount",

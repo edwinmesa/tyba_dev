@@ -22,14 +22,12 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the entrypoint script
-COPY entrypoint.sh .
-# Make the entrypoint script executable
-RUN chmod +x entrypoint.sh
-
 # Copy only the application code into the container
 # This avoids copying Airflow files, etc., into the FastAPI image.
 COPY ./app .
+
+# Make the entrypoint script executable
+RUN chmod +x entrypoint.sh
 
 # Expose FastAPI port
 EXPOSE 8088

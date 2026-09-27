@@ -16,7 +16,26 @@ services:
       timeout: 5s
       retries: 5
 
-
+  pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tyba_pipeline
+    volumes:
+      - ./app:/app
+      - ./data:/app/data
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=tyba
+      - POSTGRES_USER=tyba
+      - POSTGRES_PASSWORD=tyba
+    env_file:
+      - path: .env
+        required: false
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   fastapi-app:
     build:
@@ -40,9 +59,8 @@ services:
       - path: .env
         required: false
     depends_on:
-      postgres:
-        condition: service_healthy
+      pipeline:
+        condition: service_completed_successfully
 
 volumes:
   pgdata:
-

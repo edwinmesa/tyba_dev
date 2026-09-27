@@ -10,7 +10,7 @@
         -- seguro usarlo como llave de partición. _loaded_at lo controla el
         -- loader, siempre es válido.
         create table if not exists raw.transactions (
-            id              text,
+            id_cliente      text,
             date            text,
             product         text,
             amount          text,
@@ -39,7 +39,7 @@
         -- Sobre tabla particionada, el índice se crea una vez en el padre
         -- y Postgres lo propaga automáticamente a cada partición (PG >= 11).
         create index if not exists idx_raw_transactions_id
-            on raw.transactions (id);
+            on raw.transactions (id_cliente);
         create index if not exists idx_raw_transactions_type_fund
             on raw.transactions (type, fund);
     {% endset %}
