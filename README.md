@@ -157,11 +157,9 @@ Con el stack arriba, disponible en `http://localhost:8000`:
 | Endpoint | Descripción |
 |---|---|
 | `GET /health` | Chequeo de salud |
-| `GET /movimientos` | Estado actual (paginado) |
-| `GET /movimientos/{id}` | Un movimiento vigente por id |
-| `GET /movimientos/{id}/historial` | Todas las versiones históricas de un id |
-| `GET /insights/resumen-por-producto` | Volumen/montos por producto, fondo y tipo |
-| `GET /insights/cambios-por-corte` | Nuevos/corregidos/eliminados por cada corte procesado |
+| `GET /transactions` | Transactions|
+| `GET /transactions_by_client/{id_cliente}` | Un movimiento vigente por ID cliente |
+| `GET files_processed` | Archivos proceesados|
 
 ## Estructura del repo
 
