@@ -161,34 +161,6 @@ Con el stack arriba, disponible en `http://localhost:8000`:
 | `GET /transactions_by_client/{id_cliente}` | Un movimiento vigente por ID cliente |
 | `GET files_processed` | Archivos proceesados|
 
-## Estructura del repo
-
-```
-repo/
-├── data/
-│   ├── raw/                 ← parquet de entrada (montado como volumen)
-│   └── output/
-├── dbt_tyba/                ← proyecto dbt
-│   ├── dbt_project.yml
-│   ├── profiles.yml
-│   ├── macros/
-│   │   ├── create_raw_schema.sql      ← DDL de raw.transactions (particionada)
-│   │   └── generate_schema_name.sql   ← esquemas limpios (staging/marts/snapshots)
-│   ├── models/
-│   │   ├── staging/         ← stg_transactions + sources.yml + tests
-│   │   └── marts/           ← dim_current_transactions, fct_historical_transactions, insights_*
-│   ├── snapshots/           ← snapshot_transactions.sql (SCD2)
-│   └── tests/                ← tests singulares de calidad
-├── src/
-│   ├── loader.py             ← carga eficiente (COPY) de parquet a Postgres
-│   ├── run_pipeline.py       ← orquestador: por cada corte, carga + snapshot
-│   └── api.py                ← FastAPI de solo lectura sobre los marts
-├── Dockerfile
-├── docker-compose.yml
-├── entrypoint.sh
-├── requirements.txt
-└── README.md
-```
 
 ## Calidad de datos: decisiones y supuestos
 
