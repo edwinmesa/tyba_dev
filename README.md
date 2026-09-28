@@ -244,7 +244,7 @@ repo/
 En esta parte vamos a realizar una explicacion con un cliente paso a paso
 y tambien vamos a responder preguntas del negocio en el notebook: 
 
-**[Analisis e Insighs ](/EDA.ipynb)**
+**[Analisis e Insighs ](/app//EDA.ipynb)**
 
 Preguntas:
 
