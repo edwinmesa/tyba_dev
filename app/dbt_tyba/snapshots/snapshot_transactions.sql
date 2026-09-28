@@ -3,50 +3,49 @@
 {{
     config(
       target_schema='snapshots',
-      unique_key='id_cliente',
+      unique_key='transaction_id',
       strategy='check',
       check_cols=['row_hash'],
       invalidate_hard_deletes=True
     )
 }}
 
--- Cómo resuelve esto cada situación del enunciado:
---   * Registro nuevo:      id no existía en el snapshot -> dbt inserta primera versión
---   * Registro corregido:  cambia row_hash -> dbt cierra la versión anterior
---                           (dbt_valid_to) y abre una nueva (dbt_valid_from)
---   * Registro eliminado:  id existía antes y ya no aparece en este corte ->
---                           invalidate_hard_deletes cierra la fila y la marca
---                           dbt_is_deleted = true
---   * Sin cambios:         mismo row_hash -> dbt no toca la fila
+-- El snapshot ve SOLO el estado del corte más reciente (el que run_pipeline.py
+-- acaba de cargar). Así dbt compara "estado de hoy" contra "estado de ayer":
+--   * transaction_id nuevo            -> se inserta su primera versión
+--   * mismo transaction_id, otro row_hash (amount/description/commercial_name)
+--                                     -> se cierra la versión anterior y se abre otra
+--   * transaction_id que estaba y ya no viene en este corte
+--                                     -> invalidate_hard_deletes cierra la fila (dbt_valid_to)
+--   * mismo row_hash                  -> no se toca
 --
--- Nota: este snapshot se corre una vez POR CORTE (ver src/run_pipeline.py),
--- así el "estado actual" contra el que compara siempre es exactamente el
--- corte inmediatamente anterior.
+-- Si leyera todos los cortes acumulados, una transacción eliminada seguiría
+-- apareciendo en la fuente (con los datos del corte viejo) y nunca se detectaría.
+--
+-- transaction_id es sintético (ver stg_transactions.sql): el parquet no trae
+-- un id único por transacción, solo id_cliente (identificador del cliente).
+-- stg_transactions ya deduplica por llave de negocio dentro de cada corte.
 
-with ranked as (
-    select
-        id_cliente,
-        movement_date,
-        product,
-        amount,
-        description,
-        fund,
-        type,
-        commercial_name,
-        row_hash,
-        _source_file,
-        _batch_id,
-        _loaded_at,
-        row_number() over (partition by id_cliente order by _loaded_at desc) as _rn
-    from {{ ref('stg_transactions') }}
-)
-
--- Postgres no soporta QUALIFY (a diferencia de Snowflake/DuckDB/BigQuery),
--- por eso el filtro de "versión más reciente por id" va en un CTE aparte.
 select
-    id_cliente, movement_date, product, amount, description, fund, type,
-    commercial_name, row_hash, _source_file, _batch_id, _loaded_at
-from ranked
-where _rn = 1
+    transaction_id,
+    id_cliente,
+    movement_date,
+    product,
+    amount,
+    description,
+    fund,
+    type,
+    commercial_name,
+    row_hash,
+    _source_file,
+    _batch_id,
+    _loaded_at
+from {{ ref('stg_transactions') }}
+where _batch_id = (
+    select _batch_id
+    from {{ ref('stg_transactions') }}
+    order by _loaded_at desc
+    limit 1
+)
 
 {% endsnapshot %}

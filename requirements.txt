@@ -1,4 +1,6 @@
 polars
+pandas
+plotly
 psutil
 chardet
 fastapi

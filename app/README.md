@@ -1,4 +1,4 @@
-# Pipeline de Movimientos Financieros — Tyba
+# Pipeline de Movimientos Financieros — Tyba -  (Python, DBT, Postgres, FastAPI)
 
 Pipeline de ingeniería de datos de extremo a extremo que ingiere cortes diarios
 de movimientos financieros (parquet), detecta su evolución día a día (nuevos,
@@ -7,11 +7,23 @@ expone el resultado consultable vía Postgres y una API.
 
 ## Arquitectura
 
-Arquitectura medallion (bronze/silver/gold) con la capa gold modelada como data mart (fact/dim), y una capa silver historizada vía SCD2 para mantener trazabilidad completa de los cambios entre cortes
+Arquitectura tipo medallion (bronze/silver/gold) con la capa gold modelada como data mart (fact/dim), y una capa silver historizada vía SCD2 para mantener trazabilidad completa de los cambios entre cortes
+
+### Capas / Esquemas Postgres
+
+| Capa/Esquema | Objeto/Tablas | Qué hace |
+|---|---|---|
+| raw | `raw.transactions` (Postgres, indexada y particionada por mes) | Datos crudos tal cual llegan del parquet, cargados vía `COPY`. Append-only: nunca se sobreescribe ni se borra — es la fuente de verdad para auditar o reprocesar. |
+| staging | `stg_transactions` (view) | Tipado, limpieza de datos sucios, deduplicación intra-corte, y cálculo de `row_hash` (hash de los campos de negocio) para detectar cambios. |
+| snapshots | `snapshot_transactions` (SCD2 -Slowly Change Dimension) | Compara cada corte contra el anterior usando `row_hash` y resuelve automáticamente **nuevo** / **corregido** / **eliminado** / **sin cambios**, sin perder trazabilidad (`dbt_valid_from`, `dbt_valid_to`, `dbt_is_deleted`). **Resuelve los cortes diarios y movimientos de los clientes** |
+| marts | `dim_current_transactions`, `fct_historical_transactions`, `insights_*` | Estado actual, historial auditable, y agregaciones de negocio listas para consumo. IMPORTANTE: Tabla para Dashboards, API, negocio **dim_current_transactions** |
+| API | FastAPI | Expone los marts de solo lectura. |
+
+| Diagrama
 
 ```mermaid
 flowchart TD
-    A[Parquet: movimientos_dia_T.parquet<br/>movimientos_dia_T1.parquet] -->|COPY vía loader.py| B[(raw.transactions<br/>particionada por mes)]
+    A[Parquet: movimientos_dia_T.parquet<br/>movimientos_dia_T1.parquet] -->|COPY vía run_tyba_pipeline.py| B[(raw.transactions<br/>particionada por mes)]
     B -->|view: limpieza + row_hash| C[stg_transactions]
     C -->|dbt snapshot, SCD2| D[(snapshot_transactions)]
     D --> E[dim_current_transactions<br/>estado actual]
@@ -24,21 +36,11 @@ flowchart TD
     H --> I
 ```
 
-### Capas
-
-| Capa | Objeto | Qué hace |
-|---|---|---|
-| Raw | `raw.transactions` (Postgres, particionada por mes) | Datos crudos tal cual llegan del parquet, cargados vía `COPY`. Append-only: nunca se sobreescribe ni se borra — es la fuente de verdad para auditar o reprocesar. |
-| Staging | `stg_transactions` (view) | Tipado, limpieza de datos sucios, deduplicación intra-corte, y cálculo de `row_hash` (hash de los campos de negocio) para detectar cambios. |
-| Snapshot | `snapshot_transactions` (SCD2) | Compara cada corte contra el anterior usando `row_hash` y resuelve automáticamente **nuevo** / **corregido** / **eliminado** / **sin cambios**, sin perder trazabilidad (`dbt_valid_from`, `dbt_valid_to`, `dbt_is_deleted`). |
-| Marts | `dim_current_transactions`, `fct_historical_transactions`, `insights_*` | Estado actual, historial auditable, y agregaciones de negocio listas para consumo. |
-| API | FastAPI | Expone los marts de solo lectura. |
-
 ### Decisiones clave
 
 - **Postgres sobre DuckDB**: el volumen esperado (millones de filas, crecimiento diario) necesita concurrencia real, particionamiento e índices — no solo lectura analítica de un archivo local.
 - **dbt snapshot (SCD2) sobre lógica custom en Python**: la detección de nuevo/corregido/eliminado es una regla de negocio declarativa; dbt la resuelve de forma probada y auditable en vez de reinventar control de versiones a mano.
-- **Loader separado de dbt**: Python solo mueve bytes (parquet → raw) vía `COPY FROM STDIN` (no `INSERT` fila a fila — crítico a escala). Toda la transformación vive en SQL/dbt, versionada como código.
+- **Loader separado de dbt**: Python solo mueve bytes (parquet → raw) vía `COPY FROM STDIN` (Carga masiva, no `INSERT` fila a fila — crítico a escala). Toda la transformación vive en SQL/dbt, versionada como código.
 - **Particionamiento por `_loaded_at`** (no por `date` del negocio): ese campo llega como texto sucio del parquet; `_loaded_at` lo controla el loader y siempre es válido.
 - **`row_hash`** en vez de comparar campo por campo: barato de calcular y de comparar a escala.
 - **Sin Airflow**: el alcance pedido (`docker compose up --build`, sin scheduling explícito) no lo justifica. La orquestación mínima vive en `entrypoint.sh` + `run_pipeline.py`: cargar corte → `dbt snapshot`, por cada archivo nuevo, en orden.
@@ -127,7 +129,7 @@ que haya que recrearlos manualmente cada mes.
    docker compose up --build
    ```
 
-Eso es todo — sin configuración adicional. Internamente, en orden:
+Eso es todo — sin configuración adicional. Ya se ejecuta el **entrypoint.sh** Internamente, en orden:
 
 ```
 1. Postgres levanta y expone healthcheck
@@ -238,3 +240,21 @@ repo/
   Para producción con corridas diarias automáticas, se añadiría un scheduler
   (cron dentro del contenedor, o un orquestador como Airflow) por encima de
   este mismo pipeline — no se incluyó por no ser parte del alcance pedido.
+
+## EDA e Insights
+
+En esta parte vamos a realizar una explicacion con un cliente paso a paso
+y tambien vamos a responder preguntas del negocio en el notebook: 
+
+**[Analisis e Insighs ](/EDA.ipynb)**
+
+Preguntas:
+
+- Como se mueve el Pipeline se tomo de ejemplo el id_cliente: CLI002977
+- Como se ve el negocio hoy?
+- Como evolucionaron los datos de un dia a otro?
+- Volumen de transacciones por producto y fondo
+- Hacia donde se mueve el dinero, y cuando?
+
+
+

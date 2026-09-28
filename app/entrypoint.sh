@@ -30,11 +30,12 @@ dbt run-operation create_raw_schema
 echo ">> Creando modelos de staging (necesarios antes del primer snapshot)..."
 dbt run --select staging.* 
 
-# run_pipeline.py hace lo siguiente por cada archivo NUEVO en /app/data/raw
+# run_tyba_pipeline.py hace lo siguiente por cada archivo NUEVO en /app/data/raw
 # (en orden alfabético = orden cronológico de los cortes):
 #   1. lo carga en raw.movimientos vía COPY
 #   2. corre `dbt snapshot` inmediatamente después de cargarlo
 # Esto simula el procesamiento día a día: cada corte se snapshotea
+
 # individualmente para que la lógica de SCD2 detecte nuevo/corregido/eliminado
 # comparando exactamente contra el corte anterior, no contra un batch mezclado.
 

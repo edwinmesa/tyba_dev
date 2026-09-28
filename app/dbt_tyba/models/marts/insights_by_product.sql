@@ -1,6 +1,7 @@
--- Insight 1: volumen de movimientos y monto total, agrupado por producto,
--- fondo y tipo, sobre el estado ACTUAL (no histórico) — responde
--- "¿cómo se ve el negocio hoy?"
+-- Active: 1790548526819@@postgres@5432@tyba@marts
+-- # "¿Cómo se ve el negocio hoy?"
+-- #   Este insight muestra el volumen de movimientos y monto total, agrupado por producto,
+-- #   fondo y tipo, sobre el estado ACTUAL (no histórico)
 
 select
     product,

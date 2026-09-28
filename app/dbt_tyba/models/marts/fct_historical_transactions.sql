@@ -1,3 +1,4 @@
+-- Active: 1790548526819@@postgres@5432@tyba
 -- Histórico completo (todas las versiones de todos los ids) con una
 -- clasificación explícita del tipo de evento, para auditoría y para las
 -- consultas de "insights" (cuántos registros nuevos/corregidos/eliminados

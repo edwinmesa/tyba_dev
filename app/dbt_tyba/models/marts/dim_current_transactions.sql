@@ -1,6 +1,6 @@
+-- Active: 1790548526819@@postgres@5432@tyba
 -- Foto del estado vigente: una fila por id, la versión más reciente que no
--- ha sido cerrada ni marcada como eliminada. Esta es la tabla que consultaría
--- una aplicación o un analista que solo necesita "el dato de hoy".
+-- ha sido cerrada ni marcada como eliminada.
 
 select
     id_cliente,

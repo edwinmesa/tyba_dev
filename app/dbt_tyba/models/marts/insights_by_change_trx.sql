@@ -1,6 +1,6 @@
--- Insight 2: cuántos registros nuevos, corregidos y eliminados hubo en cada
--- corte procesado. Responde directamente la pregunta central del ejercicio:
--- "¿cómo evolucionaron los datos de un día a otro?"
+-- Active: 1790548526819@@postgres@5432@tyba@marts
+-- # ¿cómo evolucionaron los datos de un día a otro?
+-- # cuántos registros nuevos, corregidos y eliminados hubo en cada corte procesado
 
 select
     _batch_id,

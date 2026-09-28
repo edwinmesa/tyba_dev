@@ -6,7 +6,7 @@ models:
     columns:
       - name: id_cliente
         tests:
-          - unique
+          # - unique
           - not_null
 
   - name: fct_historical_transactions

@@ -12,7 +12,7 @@
 
 {{ config(severity = 'warn') }}
 
-select id, amount, type
+select id_cliente, amount, type
 from {{ ref('stg_transactions') }}
 where type is not null
   and amount = 0
